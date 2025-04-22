@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-nextstep-background text-nextstep-text-primary min-h-screen;
+  }
+
+  h1 {
+    @apply text-nextstep-text-primary;
+  }
+
+  h2, h3, h4, h5, h6 {
+    @apply text-nextstep-text-primary;
+  }
+
+  p {
+    @apply text-nextstep-text-secondary;
+  }
+
+  button {
+    @apply rounded-md shadow-nextstep transition-all duration-200;
+  }
+
+  input, select, textarea {
+    @apply bg-nextstep-card border-nextstep-border text-nextstep-text-primary focus:border-primary-500 focus:ring-primary-500;
+  }
+}
+
+@layer components {
+  .nextstep-card {
+    @apply bg-nextstep-card border border-nextstep-border rounded-lg shadow-nextstep;
+  }
+
+  .nextstep-button-primary {
+    @apply bg-nextstep-button-bg text-nextstep-button-text hover:bg-nextstep-button-hover;
+  }
+
+  .nextstep-button-secondary {
+    @apply bg-nextstep-card text-nextstep-text-primary border border-nextstep-border hover:bg-gray-700;
+  }
+
+  .nextstep-input {
+    @apply bg-nextstep-card border border-nextstep-border rounded-md text-nextstep-text-primary;
+  }
+  
+  .nextstep-gradient {
+    @apply bg-nextstep-gradient;
+  }
+} 
