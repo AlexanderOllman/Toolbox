@@ -9,6 +9,7 @@ A web application for managing MCP servers and generating configuration files.
 - YAML and JSON configuration generation
 - Modern UI with React and Tailwind CSS
 - Command-line tools for repository management and config generation
+- Vector-based search for repositories
 
 ## Project Structure
 
@@ -23,6 +24,7 @@ The project is divided into two main parts:
 - Node.js 18+
 - Git
 - OpenAI API key
+- Qdrant vector database (for repository storage and search)
 
 ## Getting Started
 
@@ -119,7 +121,8 @@ Available commands:
 ## Development Notes
 
 - The OpenAI API key is hardcoded in `backend/app/services/openai_service.py`. In a production environment, this should be replaced with an environment variable.
-- The database is a SQLite file stored at `backend/mcp_servers.db`. Make sure this file is backed up regularly.
+- Repository data is stored in Qdrant vector database. Make sure your Qdrant instance is properly configured and backed up regularly.
+- Qdrant connection parameters can be configured in the Vector Settings section of the application.
 
 ## License
 

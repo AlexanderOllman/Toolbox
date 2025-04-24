@@ -111,7 +111,7 @@ async def update_settings(config: ConfigUpdateRequest):
             logger.info(f"Skipping unchanged setting {item.key}={item.value}")
     
     # If Qdrant related settings changed, reinitialize vector DB
-    qdrant_settings = ["QDRANT_HOST", "QDRANT_PORT"]
+    qdrant_settings = ["QDRANT_HOST", "QDRANT_PORT", "COLLECTION_NAME"]
     if any(key in qdrant_settings for key in changed_settings):
         try:
             logger.info("Reinitializing vector database with new settings")
@@ -119,7 +119,8 @@ async def update_settings(config: ConfigUpdateRequest):
             # Check settings were properly saved
             host = get_config_value("QDRANT_HOST", "localhost")
             port = get_config_value("QDRANT_PORT", "6333")
-            logger.info(f"Using Qdrant settings: host={host}, port={port}")
+            collection_name = get_config_value("COLLECTION_NAME", "mcp_servers")
+            logger.info(f"Using Qdrant settings: host={host}, port={port}, collection={collection_name}")
             
             init_success = init_vector_db()
             if not init_success:
@@ -145,7 +146,8 @@ async def test_qdrant_connection():
     # Log current settings
     host = get_config_value("QDRANT_HOST", "localhost")
     port = get_config_value("QDRANT_PORT", "6333")
-    logger.info(f"Testing connection with settings: host={host}, port={port}")
+    collection_name = get_config_value("COLLECTION_NAME", "mcp_servers")
+    logger.info(f"Testing connection with settings: host={host}, port={port}, collection={collection_name}")
     
     connection_status = check_qdrant_connection()
     
@@ -156,7 +158,8 @@ async def test_qdrant_connection():
         "message": connection_status["message"],
         "settings": {
             "host": host,
-            "port": port
+            "port": port,
+            "collection": collection_name
         }
     }
 

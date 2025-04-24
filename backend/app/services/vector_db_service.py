@@ -1,5 +1,5 @@
 import os
-import openai
+from openai import OpenAI
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import (
     Distance,
@@ -17,12 +17,33 @@ from requests.exceptions import RequestException
 
 from app.services.config_service import get_config_value
 
-# Define collection name and vector size
-COLLECTION_NAME = "repositories"
+# Vector size for text-embedding-3-small
 VECTOR_SIZE = 1536  # text-embedding-3-small output dimension
 
 # Set up logging
 logger = logging.getLogger(__name__)
+
+def get_collection_name():
+    """Get the collection name from config"""
+    return get_config_value("COLLECTION_NAME", "mcp_servers")
+
+def get_embedding(text: str) -> List[float]:
+    """Generate an embedding for the given text."""
+    api_key = get_config_value("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", ""))
+    if not api_key:
+        raise ValueError("OpenAI API key not found in configuration or environment variables")
+    
+    try:
+        # Create client with the updated OpenAI SDK approach
+        client = OpenAI(api_key=api_key)
+        response = client.embeddings.create(
+            input=[text],
+            model="text-embedding-3-small"
+        )
+        return response.data[0].embedding
+    except Exception as e:
+        logger.error(f"Error generating embedding: {str(e)}")
+        raise
 
 def get_qdrant_client():
     """Get a Qdrant client using configuration from the database."""
@@ -40,8 +61,9 @@ def check_qdrant_connection() -> Dict[str, Any]:
     # Always get the latest settings directly from the database
     host = get_config_value("QDRANT_HOST", "localhost")
     port = int(get_config_value("QDRANT_PORT", "6333"))
+    collection = get_collection_name()
     
-    logger.info(f"Checking connection to Qdrant server at {host}:{port}")
+    logger.info(f"Checking connection to Qdrant server at {host}:{port}, collection: {collection}")
     
     try:
         # Use requests directly for more reliable connection testing
@@ -69,78 +91,18 @@ def init_vector_db():
         
     try:
         client = get_qdrant_client()
+        collection_name = get_collection_name()
         
         # Create collection if it doesn't exist
-        if not client.collection_exists(COLLECTION_NAME):
+        if not client.collection_exists(collection_name):
             client.create_collection(
-                collection_name=COLLECTION_NAME,
+                collection_name=collection_name,
                 vectors_config=VectorParams(size=VECTOR_SIZE, distance=Distance.COSINE),
             )
-        logger.info("Vector database initialized successfully")
+        logger.info(f"Vector database initialized successfully with collection {collection_name}")
         return True
     except Exception as e:
         logger.warning(f"Vector database initialization failed: {str(e)}")
-        return False
-
-def get_embedding(text: str) -> List[float]:
-    """Generate an embedding for the given text."""
-    api_key = get_config_value("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", ""))
-    if not api_key:
-        raise ValueError("OpenAI API key not found in configuration or environment variables")
-    
-    openai.api_key = api_key
-    response = openai.Embedding.create(input=[text], model="text-embedding-3-small")
-    return response["data"][0]["embedding"]
-
-def generate_point_id(repo_name: str) -> int:
-    """Generate a deterministic point ID from repository name."""
-    return int(hashlib.md5(repo_name.encode()).hexdigest(), 16) % (2**63)
-
-def add_repository_to_vector_db(repo_name: str, description: str, metadata: Dict[str, Any]):
-    """Add a repository to the vector database."""
-    connection_status = check_qdrant_connection()
-    if connection_status["status"] != "connected":
-        logger.warning(f"Skipping vector database update: {connection_status['message']}")
-        return None
-    
-    try:
-        client = get_qdrant_client()
-        
-        # Generate embedding for repository description
-        embedding = get_embedding(description)
-        
-        # Create payload with metadata and text
-        payload = {
-            "name": repo_name,
-            "description": description,
-            **metadata
-        }
-        
-        # Insert vector into Qdrant
-        point_id = generate_point_id(repo_name)
-        point = PointStruct(id=point_id, vector=embedding, payload=payload)
-        client.upsert(collection_name=COLLECTION_NAME, points=[point])
-        
-        return point_id
-    except Exception as e:
-        logger.error(f"Error adding repository to vector database: {str(e)}")
-        return None
-
-def delete_repository_from_vector_db(repo_name: str) -> bool:
-    """Delete a repository from the vector database."""
-    connection_status = check_qdrant_connection()
-    if connection_status["status"] != "connected":
-        logger.warning(f"Skipping vector database deletion: {connection_status['message']}")
-        return False
-    
-    try:
-        client = get_qdrant_client()
-        point_id = generate_point_id(repo_name)
-        
-        client.delete(collection_name=COLLECTION_NAME, points_selector=[point_id])
-        return True
-    except Exception as e:
-        logger.error(f"Error deleting repository from vector database: {str(e)}")
         return False
 
 def search_repositories(query: str, limit: int = 5) -> List[Dict[str, Any]]:
@@ -152,13 +114,14 @@ def search_repositories(query: str, limit: int = 5) -> List[Dict[str, Any]]:
     
     try:
         client = get_qdrant_client()
+        collection_name = get_collection_name()
         
         # Generate embedding for query
         query_embedding = get_embedding(query)
         
         # Search for similar vectors
         search_results = client.search(
-            collection_name=COLLECTION_NAME,
+            collection_name=collection_name,
             query_vector=query_embedding,
             limit=limit,
         )
@@ -166,11 +129,13 @@ def search_repositories(query: str, limit: int = 5) -> List[Dict[str, Any]]:
         # Format results
         results = []
         for result in search_results:
+            payload = result.payload
             results.append({
-                "name": result.payload.get("name"),
-                "description": result.payload.get("description"),
+                "name": payload.get("name"),
+                "description": payload.get("description"),
                 "score": result.score,
-                **{k: v for k, v in result.payload.items() if k not in ["name", "description"]}
+                "command": payload.get("command"),
+                "args": payload.get("args", [])
             })
         
         return results

@@ -22,6 +22,7 @@ const VectorSettings = () => {
     QDRANT_HOST: '',
     QDRANT_PORT: '',
     OPENAI_API_KEY: '',
+    COLLECTION_NAME: '',
     QDRANT_STATUS: 'unknown'
   });
   const [loading, setLoading] = useState(true);
@@ -90,12 +91,23 @@ const VectorSettings = () => {
           value
         }));
       
+      // Log the items being sent
+      console.log('Saving settings:', configItems);
+      
       const response = await updateSettings(configItems);
       
       setSaveStatus({
         message: response.message || 'Settings saved successfully',
         severity: 'success'
       });
+
+      // Explicitly verify that settings were saved by fetching them again
+      const updatedSettings = await getSettings();
+      console.log('Retrieved settings after save:', updatedSettings);
+      setSettings(prevSettings => ({
+        ...updatedSettings,
+        QDRANT_STATUS: prevSettings.QDRANT_STATUS // Preserve connection status
+      }));
 
       // After updating settings, refresh connection status
       await refreshConnectionStatus();
@@ -114,6 +126,24 @@ const VectorSettings = () => {
       setTestingConnection(true);
       setTestStatus({ message: '', severity: 'info' });
       
+      // Save current values first to ensure we test against the values in the form
+      const currentSettings = {
+        QDRANT_HOST: settings.QDRANT_HOST,
+        QDRANT_PORT: settings.QDRANT_PORT,
+        COLLECTION_NAME: settings.COLLECTION_NAME
+      };
+      
+      console.log('Testing connection with:', currentSettings);
+      
+      // Save current form values first so test uses these values
+      const configItems = Object.entries(currentSettings).map(([key, value]) => ({
+        key, value
+      }));
+      
+      // Apply settings before testing
+      await updateSettings(configItems);
+      
+      // Now test the connection
       const response = await testQdrantConnection();
       
       setTestStatus({
@@ -226,6 +256,18 @@ const VectorSettings = () => {
               />
             </Grid>
           </Grid>
+
+          <TextField
+            fullWidth
+            label="Collection Name"
+            name="COLLECTION_NAME"
+            value={settings.COLLECTION_NAME || ''}
+            onChange={handleInputChange}
+            margin="normal"
+            variant="outlined"
+            placeholder="mcp_servers"
+            helperText="Name of the collection in Qdrant for storing repository embeddings"
+          />
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 1, mb: 3 }}>
             <Button 

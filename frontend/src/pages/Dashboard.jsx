@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getRepositories } from '../services/api';
+import { getRepositories, searchRepositories } from '../services/api';
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
     repositories: 0,
   });
   const [loading, setLoading] = useState(true);
+  
+  // Semantic search state
+  const [query, setQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,6 +30,24 @@ export default function Dashboard() {
 
     fetchData();
   }, []);
+  
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+
+    setSearchLoading(true);
+    setSearchError(null);
+    
+    try {
+      const results = await searchRepositories(query, 5);
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Error searching repositories:', error);
+      setSearchError('Failed to search repositories. Please try again.');
+    } finally {
+      setSearchLoading(false);
+    }
+  };
 
   return (
     <div>
@@ -124,6 +148,74 @@ export default function Dashboard() {
                   </Link>
                 </div>
               </div>
+            </div>
+          </div>
+          
+          {/* Semantic Search Section */}
+          <div className="nextstep-card overflow-hidden mt-6">
+            <div className="nextstep-gradient px-4 py-5 sm:p-6">
+              <h2 className="text-xl font-medium text-nextstep-text-primary mb-4">Semantic Search</h2>
+              <p className="text-sm text-nextstep-text-secondary mb-4">
+                Search for repositories based on semantic relation to your description
+              </p>
+              
+              <form onSubmit={handleSearch} className="mb-4">
+                <div className="flex">
+                  <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Describe what you're looking for..."
+                    className="flex-grow px-4 py-2 border border-gray-300 rounded-l focus:outline-none focus:ring-2 focus:ring-primary-500 bg-nextstep-input-bg text-nextstep-text-primary"
+                  />
+                  <button
+                    type="submit"
+                    disabled={searchLoading || !query.trim()}
+                    className="px-4 py-2 bg-primary-600 text-white rounded-r hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
+                  >
+                    {searchLoading ? 'Searching...' : 'Search'}
+                  </button>
+                </div>
+              </form>
+
+              {searchError && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                  {searchError}
+                </div>
+              )}
+
+              {searchResults.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-medium text-nextstep-text-primary mb-2">Top 5 Results</h3>
+                  <div className="space-y-4">
+                    {searchResults.map((repo, index) => (
+                      <div key={index} className="border border-nextstep-border rounded p-4">
+                        <div className="flex justify-between items-start">
+                          <h4 className="text-lg font-medium text-nextstep-text-primary">{repo.name}</h4>
+                          <span className="text-sm bg-primary-100 text-primary-800 py-1 px-2 rounded">
+                            Score: {(repo.score * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                        <p className="mt-1 text-nextstep-text-secondary">{repo.description}</p>
+                        <div className="mt-2">
+                          <span className="text-sm font-medium text-nextstep-text-primary">Command: </span>
+                          <code className="text-sm bg-nextstep-code-bg text-nextstep-code-text px-2 py-1 rounded">
+                            {repo.command}
+                          </code>
+                        </div>
+                        {repo.args && repo.args.length > 0 && (
+                          <div className="mt-2">
+                            <span className="text-sm font-medium text-nextstep-text-primary">Args: </span>
+                            <code className="text-sm bg-nextstep-code-bg text-nextstep-code-text px-2 py-1 rounded">
+                              {repo.args.join(' ')}
+                            </code>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

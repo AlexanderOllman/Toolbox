@@ -17,7 +17,8 @@ from app.services.database import get_repositories
 def generate_yaml_command(args):
     """Generate YAML configuration file."""
     output_path = args.output or get_default_config_path()
-    yaml_str = generate_yaml_config(output_path)
+    repositories = get_repositories()
+    yaml_str = generate_yaml_config(repositories=repositories, output_path=output_path)
     if args.print:
         print(yaml_str)
 

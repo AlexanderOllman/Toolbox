@@ -4,10 +4,10 @@ import subprocess
 import os
 from pydantic import BaseModel
 
-from app.models.repositories import Repository, RepositoryCreate
-from app.services.database import get_repositories, get_repository, add_repository, delete_repository
+from app.models.repositories import Repository, RepositoryCreate, ServerRoot
+from app.services.database import get_repositories, get_repository, add_repository, delete_repository, add_server_root, get_server_roots
 from app.services.openai_service import get_repo_info_from_gpt
-from app.services.vector_db_service import add_repository_to_vector_db, delete_repository_from_vector_db, search_repositories
+from app.services.vector_db_service import search_repositories
 
 router = APIRouter()
 
@@ -17,6 +17,11 @@ class RepoDetailsRequest(BaseModel):
 class SearchQuery(BaseModel):
     query: str
     limit: int = 5
+
+class ServerRootCreate(BaseModel):
+    uri: str
+    name: str = None
+    server_uri_alias: str = None
 
 @router.get("/", response_model=List[Repository])
 async def list_repositories():
@@ -140,20 +145,21 @@ async def create_repository(repo_data: RepositoryCreate):
             command = repo_data.command
             args = repo_data.args
         
-        # Add to database
-        repo = add_repository(name, description, command, args)
-        
-        # Add to vector database - this won't fail if Qdrant is unavailable
-        try:
-            metadata = {
-                "command": command,
-                "args": args,
-                "repo_url": repo_url
-            }
-            add_repository_to_vector_db(name, description, metadata)
-        except Exception as e:
-            print(f"Warning: Failed to add repository to vector database: {str(e)}")
-            # Continue anyway, don't fail the whole request
+        # Add to database (now using Qdrant) with all the fields
+        repo = add_repository(
+            name=name, 
+            description=description, 
+            command=command, 
+            args=args,
+            transport=repo_data.transport,
+            url=repo_data.url,
+            read_timeout_seconds=repo_data.read_timeout_seconds,
+            read_transport_sse_timeout_seconds=repo_data.read_transport_sse_timeout_seconds,
+            headers=repo_data.headers,
+            api_key=repo_data.api_key,
+            env=repo_data.env,
+            roots_table=repo_data.roots_table
+        )
         
         return repo
     
@@ -169,11 +175,58 @@ async def remove_repository(name: str):
     if not success:
         raise HTTPException(status_code=404, detail="Repository not found")
     
-    # Also remove from vector database - this won't fail if Qdrant is unavailable
-    try:
-        delete_repository_from_vector_db(name)
-    except Exception as e:
-        print(f"Warning: Failed to remove repository from vector database: {str(e)}")
-        # Continue anyway, don't fail the whole request
+    return None
+
+@router.post("/{name}/roots", response_model=ServerRoot)
+async def add_root_to_repository(name: str, root_data: ServerRootCreate):
+    """Add a root directory to a repository."""
+    # Check if repository exists
+    repo = get_repository(name)
+    if not repo:
+        raise HTTPException(status_code=404, detail="Repository not found")
     
-    return None 
+    # If no roots_table is defined for this repository, return an error
+    if not repo.get("roots_table"):
+        raise HTTPException(
+            status_code=400, 
+            detail="This repository does not have a roots table defined. Update the repository first to set a roots_table value."
+        )
+    
+    # Add the root
+    success = add_server_root(
+        server_name=name,
+        uri=root_data.uri,
+        name=root_data.name,
+        server_uri_alias=root_data.server_uri_alias
+    )
+    
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to add root to repository")
+    
+    return ServerRoot(
+        server_name=name,
+        uri=root_data.uri,
+        name=root_data.name,
+        server_uri_alias=root_data.server_uri_alias
+    )
+
+@router.get("/{name}/roots", response_model=List[ServerRoot])
+async def get_repository_roots(name: str):
+    """Get all roots for a repository."""
+    # Check if repository exists
+    repo = get_repository(name)
+    if not repo:
+        raise HTTPException(status_code=404, detail="Repository not found")
+    
+    # Get the roots
+    roots = get_server_roots(name)
+    
+    # Convert to ServerRoot models
+    return [
+        ServerRoot(
+            server_name=name,
+            uri=root["uri"],
+            name=root.get("name"),
+            server_uri_alias=root.get("server_uri_alias")
+        ) for root in roots
+    ] 
