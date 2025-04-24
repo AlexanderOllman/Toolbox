@@ -12,6 +12,8 @@ from qdrant_client.http.models import (
 from typing import List, Dict, Any, Optional
 import hashlib
 import logging
+import requests
+from requests.exceptions import RequestException
 
 from app.services.config_service import get_config_value
 
@@ -26,21 +28,45 @@ def get_qdrant_client():
     """Get a Qdrant client using configuration from the database."""
     host = get_config_value("QDRANT_HOST", "localhost")
     port = int(get_config_value("QDRANT_PORT", "6333"))
-    return QdrantClient(host=host, port=port)
+    
+    # Log the connection parameters
+    logger.info(f"Creating Qdrant client with host={host}, port={port}")
+    
+    # Set a short timeout to avoid hanging
+    return QdrantClient(host=host, port=port, timeout=5.0)
 
 def check_qdrant_connection() -> Dict[str, Any]:
-    """Check if connection to Qdrant server is available."""
+    """Check if connection to Qdrant server is available using a simple HTTP request."""
+    # Always get the latest settings directly from the database
+    host = get_config_value("QDRANT_HOST", "localhost")
+    port = int(get_config_value("QDRANT_PORT", "6333"))
+    
+    logger.info(f"Checking connection to Qdrant server at {host}:{port}")
+    
     try:
-        client = get_qdrant_client()
-        # Try a simple operation
-        client.get_collections()
-        return {"status": "connected", "message": "Successfully connected to Qdrant server"}
-    except Exception as e:
-        logger.warning(f"Failed to connect to Qdrant server: {str(e)}")
-        return {"status": "disconnected", "message": f"Failed to connect to Qdrant server: {str(e)}"}
+        # Use requests directly for more reliable connection testing
+        url = f"http://{host}:{port}/collections"
+        logger.info(f"Making HTTP request to {url}")
+        
+        response = requests.get(url, timeout=5.0)
+        response.raise_for_status()  # Raise exception for non-2xx responses
+        
+        # If we get here, the connection was successful
+        logger.info(f"Successfully connected to Qdrant server at {host}:{port}")
+        return {"status": "connected", "message": f"Successfully connected to Qdrant server at {host}:{port}"}
+    except RequestException as e:
+        error_msg = f"Failed to connect to Qdrant server at {host}:{port}: {str(e)}"
+        logger.warning(error_msg)
+        return {"status": "disconnected", "message": error_msg}
 
 def init_vector_db():
     """Initialize the vector database. Handles connection failures gracefully."""
+    # First check if we can connect
+    connection_status = check_qdrant_connection()
+    if connection_status["status"] != "connected":
+        logger.warning(f"Cannot initialize vector database: {connection_status['message']}")
+        return False
+        
     try:
         client = get_qdrant_client()
         

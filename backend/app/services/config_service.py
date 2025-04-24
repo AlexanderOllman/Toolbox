@@ -1,8 +1,12 @@
 import os
 import yaml
 import sqlite3
+import logging
 from typing import Dict, Any, Optional
 from app.services.database import get_repositories, get_connection
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 def generate_yaml_config(output_path=None):
     """Generate YAML configuration for MCP servers.
@@ -35,7 +39,7 @@ def generate_yaml_config(output_path=None):
 
 def get_default_config_path():
     """Get the default path for the YAML configuration file."""
-    return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'mcp_servers.yaml')
+    return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'mcp_servers.yaml') 
 
 def init_config_table():
     """Initialize the configuration table in the database."""
@@ -77,12 +81,13 @@ def get_config_value(key: str, default: str = None) -> str:
     row = c.fetchone()
     conn.close()
     
-    if row:
-        return row[0]
-    return default
+    value = row[0] if row else default
+    logger.debug(f"Retrieved config {key}={value}")
+    return value
 
 def set_config_value(key: str, value: str) -> None:
     """Set a configuration value in the database."""
+    logger.info(f"Setting config {key}={value}")
     conn = get_connection()
     c = conn.cursor()
     c.execute(
@@ -91,6 +96,7 @@ def set_config_value(key: str, value: str) -> None:
     )
     conn.commit()
     conn.close()
+    logger.info(f"Saved config {key}={value}")
 
 def get_all_config() -> Dict[str, str]:
     """Get all configuration values from the database."""

@@ -7,3 +7,4 @@ pyyaml
 openai
 tiktoken
 qdrant-client
+requests
