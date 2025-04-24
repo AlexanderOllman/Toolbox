@@ -23,7 +23,8 @@ const VectorSettings = () => {
     QDRANT_PORT: '',
     OPENAI_API_KEY: '',
     COLLECTION_NAME: '',
-    QDRANT_STATUS: 'unknown'
+    QDRANT_STATUS: 'unknown',
+    MCP_REPO_PATH: ''
   });
   const [loading, setLoading] = useState(true);
   const [testingConnection, setTestingConnection] = useState(false);
@@ -225,6 +226,27 @@ const VectorSettings = () => {
         <Divider sx={{ my: 3 }} />
 
         <form onSubmit={handleSubmit}>
+          <Typography variant="h6" gutterBottom>
+            MCP Repository Settings
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="MCP Repository Path"
+                name="MCP_REPO_PATH"
+                value={settings.MCP_REPO_PATH || ''}
+                onChange={handleInputChange}
+                margin="normal"
+                variant="outlined"
+                placeholder="/Users/yourname/Documents/Toolbox"
+                helperText="Directory where MCP repositories will be cloned (defaults to Toolbox directory)"
+              />
+            </Grid>
+          </Grid>
+
+          <Divider sx={{ my: 3 }} />
+
           <Typography variant="h6" gutterBottom>
             Qdrant Settings
           </Typography>

@@ -55,7 +55,7 @@ pip install -r requirements.txt
 python run.py
 ```
 
-The API will be available at http://localhost:8000.
+The API will be available at http://localhost:8020.
 
 ### Frontend Setup
 
@@ -83,8 +83,8 @@ The web application will be available at http://localhost:5173.
 
 Once the backend is running, you can access the API documentation at:
 
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- Swagger UI: http://localhost:8020/docs
+- ReDoc: http://localhost:8020/redoc
 
 ## Command-Line Tools
 

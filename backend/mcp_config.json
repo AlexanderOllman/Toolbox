@@ -2,5 +2,6 @@
   "QDRANT_HOST": "192.168.194.33",
   "QDRANT_PORT": "6333",
   "OPENAI_API_KEY": "",
+  "COLLECTION_NAME": "mcp_servers",
   "MCP_REPO_PATH": ""
 }

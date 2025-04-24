@@ -29,4 +29,4 @@ app.include_router(config_router, prefix="/api/config", tags=["configuration"])
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True) 
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8020, reload=True) 
