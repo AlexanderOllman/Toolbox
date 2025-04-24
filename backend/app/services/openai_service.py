@@ -1,7 +1,7 @@
 import json
 import tiktoken
 from openai import OpenAI
-
+import os
 # Initialize OpenAI client - should use environment variables in production
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
