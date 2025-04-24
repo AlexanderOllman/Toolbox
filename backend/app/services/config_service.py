@@ -56,7 +56,8 @@ def load_config():
             "QDRANT_HOST": "localhost",
             "QDRANT_PORT": "6333",
             "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY", ""),
-            "COLLECTION_NAME": "mcp_servers"
+            "COLLECTION_NAME": "mcp_servers",
+            "MCP_REPO_PATH": os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         }
     
     try:
@@ -69,7 +70,8 @@ def load_config():
             "QDRANT_HOST": "localhost",
             "QDRANT_PORT": "6333",
             "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY", ""),
-            "COLLECTION_NAME": "mcp_servers"
+            "COLLECTION_NAME": "mcp_servers",
+            "MCP_REPO_PATH": os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         }
 
 def save_config(config):
@@ -88,7 +90,8 @@ def init_config():
             "QDRANT_HOST": "localhost",
             "QDRANT_PORT": "6333",
             "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY", ""),
-            "COLLECTION_NAME": "mcp_servers"
+            "COLLECTION_NAME": "mcp_servers",
+            "MCP_REPO_PATH": os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         }
         save_config(default_config)
         logger.info(f"Created default config at {CONFIG_FILE_PATH}")
@@ -99,6 +102,15 @@ def get_config_value(key: str, default: str = None) -> str:
     value = config.get(key, default)
     logger.debug(f"Retrieved config {key}={value}")
     return value
+
+def get_mcp_repo_path():
+    """Get the MCP repository path with fallback to default."""
+    # Get the path from config, or default to the working parent directory (Toolbox) if not set
+    default_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    path = get_config_value("MCP_REPO_PATH", default_path)
+    # Create the directory if it doesn't exist
+    os.makedirs(path, exist_ok=True)
+    return path
 
 def set_config_value(key: str, value: str) -> None:
     """Set a configuration value."""

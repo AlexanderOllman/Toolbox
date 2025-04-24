@@ -14,13 +14,13 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from app.services.openai_service import get_repo_info_from_gpt
 from app.services.database import add_repository, init_db
+from app.services.config_service import get_mcp_repo_path
 
 
 def clone_repo(repo_url, base_dir=None):
     """Clone a Git repository if it doesn't already exist."""
     if base_dir is None:
-        base_dir = os.path.join(os.path.expanduser('~'), 'mcp')
-    os.makedirs(base_dir, exist_ok=True)
+        base_dir = get_mcp_repo_path()
     
     repo_name = repo_url.rstrip('/').split('/')[-1].replace('.git','')
     dest = os.path.join(base_dir, repo_name)

@@ -2,8 +2,11 @@ import json
 import tiktoken
 from openai import OpenAI
 import os
-# Initialize OpenAI client - should use environment variables in production
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+from app.services.config_service import get_config_value
+
+# Initialize OpenAI client - use API key from config or fallback to environment variable
+api_key = get_config_value("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY"))
+client = OpenAI(api_key=api_key)
 
 def count_tokens(text, model="gpt-4"):
     """Count tokens for a given text string using the appropriate tokenizer."""

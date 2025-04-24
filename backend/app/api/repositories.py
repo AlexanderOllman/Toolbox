@@ -8,6 +8,7 @@ from app.models.repositories import Repository, RepositoryCreate, ServerRoot
 from app.services.database import get_repositories, get_repository, add_repository, delete_repository, add_server_root, get_server_roots
 from app.services.openai_service import get_repo_info_from_gpt
 from app.services.vector_db_service import search_repositories
+from app.services.config_service import get_mcp_repo_path
 
 router = APIRouter()
 
@@ -52,8 +53,7 @@ async def fetch_repository_details(request: RepoDetailsRequest):
         repo_name = repo_url.rstrip('/').split('/')[-1].replace('.git','')
         
         # Set up temp directory for clone
-        base_dir = os.path.join(os.path.expanduser('~'), 'mcp')
-        os.makedirs(base_dir, exist_ok=True)
+        base_dir = get_mcp_repo_path()
         dest = os.path.join(base_dir, repo_name)
         
         # Clone repo if not exists
@@ -98,8 +98,7 @@ async def create_repository(repo_data: RepositoryCreate):
     # Clone the repository and extract info
     try:
         # Clone repo and extract README
-        base_dir = os.path.join(os.path.expanduser('~'), 'mcp')
-        os.makedirs(base_dir, exist_ok=True)
+        base_dir = get_mcp_repo_path()
         repo_url = repo_data.repo_url
         repo_name = repo_url.rstrip('/').split('/')[-1].replace('.git','')
         dest = os.path.join(base_dir, repo_name)
