@@ -17,12 +17,6 @@ def setup_backend_venv(backend_path):
 
     return python_exec
 
-def setup_frontend(frontend_path):
-    node_modules_path = os.path.join(frontend_path, "node_modules")
-    if not os.path.isdir(node_modules_path):
-        print("📦 Installing frontend dependencies with npm install...")
-        subprocess.run(["npm", "install"], cwd=frontend_path, check=True)
-
 def run_services():
     backend_path = os.path.join(os.getcwd(), "backend")
     frontend_path = os.path.join(os.getcwd(), "frontend")
@@ -34,8 +28,8 @@ def run_services():
         print("❌ Frontend directory not found.")
         return
 
+    # Setup and get the backend Python interpreter
     backend_python = setup_backend_venv(backend_path)
-    setup_frontend(frontend_path)
 
     print("🚀 Starting backend and frontend...")
 
