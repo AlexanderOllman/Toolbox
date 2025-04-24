@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Response
 from typing import List
 import subprocess
 import os
@@ -11,6 +11,11 @@ from app.services.vector_db_service import search_repositories
 from app.services.config_service import get_mcp_repo_path
 
 router = APIRouter()
+
+# Add OPTIONS endpoint to handle preflight requests and prevent redirects
+@router.options("/", include_in_schema=False)
+async def options_repositories():
+    return Response(status_code=200)
 
 class RepoDetailsRequest(BaseModel):
     repo_url: str
