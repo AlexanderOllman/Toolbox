@@ -30,7 +30,8 @@ class ConfigUpdateRequest(BaseModel):
 @router.get("/yaml", response_class=PlainTextResponse)
 async def get_yaml_config():
     """Generate YAML configuration for MCP servers."""
-    yaml_str = generate_yaml_config()
+    repositories = get_repositories()
+    yaml_str = generate_yaml_config(repositories=repositories)
     return yaml_str
 
 @router.get("/json")

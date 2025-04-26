@@ -1,20 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Container, 
-  Typography, 
-  TextField, 
-  Button, 
-  Box, 
-  Paper, 
-  Alert, 
-  CircularProgress, 
-  Divider, 
-  Grid, 
-  Chip,
-  Tooltip,
-  IconButton
-} from '@mui/material';
-import RefreshIcon from '@mui/icons-material/Refresh';
+import { useState, useEffect } from 'preact/hooks';
 import { getSettings, updateSettings, testQdrantConnection } from '../services/api';
 
 const VectorSettings = () => {
@@ -172,186 +156,176 @@ const VectorSettings = () => {
     }
   };
 
-  const getConnectionStatusColor = () => {
+  const getConnectionStatusClass = () => {
     switch (settings.QDRANT_STATUS) {
       case 'connected':
-        return 'success';
+        return 'bg-green-100 text-green-800 border-green-300';
       case 'disconnected':
-        return 'error';
+        return 'bg-red-100 text-red-800 border-red-300';
       default:
-        return 'default';
+        return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };
 
   if (loading && Object.values(settings).every(v => v === '' || v === 'unknown')) {
     return (
-      <Container sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
-        <CircularProgress />
-      </Container>
+      <div class="mt-4 flex justify-center">
+        <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
     );
   }
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h4" gutterBottom>
-            Vector Database Settings
-          </Typography>
-          <Box display="flex" alignItems="center">
-            <Typography variant="body2" color="text.secondary" mr={1}>
-              Connection Status:
-            </Typography>
-            <Chip 
-              label={settings.QDRANT_STATUS === 'connected' ? 'Connected' : 'Disconnected'} 
-              color={getConnectionStatusColor()} 
-              size="small" 
-              sx={{ mr: 1 }}
-            />
-            <Tooltip title="Refresh connection status">
-              <IconButton 
-                size="small" 
-                onClick={refreshConnectionStatus}
-                disabled={refreshingStatus}
-              >
-                {refreshingStatus ? <CircularProgress size={18} /> : <RefreshIcon fontSize="small" />}
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </Box>
-        <Typography variant="body1" color="text.secondary" paragraph>
+    <div class="max-w-3xl mx-auto mt-4">
+      <div class="bg-white shadow rounded-lg p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h1 class="text-2xl font-bold">Vector Database Settings</h1>
+          <div class="flex items-center">
+            <span class="text-sm text-gray-600 mr-2">Connection Status:</span>
+            <span class={`text-xs px-2 py-1 rounded-full ${getConnectionStatusClass()} mr-2 border`}>
+              {settings.QDRANT_STATUS === 'connected' ? 'Connected' : 'Disconnected'}
+            </span>
+            <button 
+              class="p-1 text-gray-500 hover:text-gray-700 focus:outline-none rounded-full hover:bg-gray-100"
+              onClick={refreshConnectionStatus}
+              disabled={refreshingStatus}
+              title="Refresh connection status"
+            >
+              {refreshingStatus ? (
+                <div class="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <span class="text-lg">🔄</span>
+              )}
+            </button>
+          </div>
+        </div>
+        <p class="text-gray-600 mb-4">
           Configure the connection to Qdrant vector database and OpenAI API for semantic search capabilities.
-        </Typography>
+        </p>
 
-        <Divider sx={{ my: 3 }} />
+        <hr class="my-6 border-gray-200" />
 
         <form onSubmit={handleSubmit}>
-          <Typography variant="h6" gutterBottom>
-            MCP Repository Settings
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="MCP Repository Path"
+          <h2 class="text-xl font-medium mb-4">MCP Repository Settings</h2>
+          <div class="grid gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1" for="mcp-repo-path">
+                MCP Repository Path
+              </label>
+              <input
+                id="mcp-repo-path"
+                type="text"
                 name="MCP_REPO_PATH"
                 value={settings.MCP_REPO_PATH || ''}
                 onChange={handleInputChange}
-                margin="normal"
-                variant="outlined"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="/Users/yourname/Documents/Toolbox"
-                helperText="Directory where MCP repositories will be cloned (defaults to Toolbox directory)"
               />
-            </Grid>
-          </Grid>
+              <p class="mt-1 text-sm text-gray-500">Directory where MCP repositories will be cloned (defaults to Toolbox directory)</p>
+            </div>
+          </div>
 
-          <Divider sx={{ my: 3 }} />
+          <hr class="my-6 border-gray-200" />
 
-          <Typography variant="h6" gutterBottom>
-            Qdrant Settings
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={8}>
-              <TextField
-                fullWidth
-                label="Qdrant Host"
+          <h2 class="text-xl font-medium mb-4">Qdrant Vector Database</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1" for="qdrant-host">
+                Qdrant Host
+              </label>
+              <input
+                id="qdrant-host"
+                type="text"
                 name="QDRANT_HOST"
                 value={settings.QDRANT_HOST || ''}
                 onChange={handleInputChange}
-                margin="normal"
-                variant="outlined"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="localhost"
-                helperText="Hostname or IP address of Qdrant server"
               />
-            </Grid>
-            <Grid item xs={4}>
-              <TextField
-                fullWidth
-                label="Qdrant Port"
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1" for="qdrant-port">
+                Qdrant Port
+              </label>
+              <input
+                id="qdrant-port"
+                type="text"
                 name="QDRANT_PORT"
                 value={settings.QDRANT_PORT || ''}
                 onChange={handleInputChange}
-                margin="normal"
-                variant="outlined"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="6333"
-                helperText="Port number"
               />
-            </Grid>
-          </Grid>
+            </div>
+          </div>
 
-          <TextField
-            fullWidth
-            label="Collection Name"
-            name="COLLECTION_NAME"
-            value={settings.COLLECTION_NAME || ''}
-            onChange={handleInputChange}
-            margin="normal"
-            variant="outlined"
-            placeholder="mcp_servers"
-            helperText="Name of the collection in Qdrant for storing repository embeddings"
-          />
+          <div class="mt-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="collection-name">
+              Collection Name
+            </label>
+            <input
+              id="collection-name"
+              type="text"
+              name="COLLECTION_NAME"
+              value={settings.COLLECTION_NAME || ''}
+              onChange={handleInputChange}
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="mcp_vector_db"
+            />
+          </div>
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 1, mb: 3 }}>
-            <Button 
-              variant="outlined" 
-              onClick={handleTestQdrantConnection}
-              disabled={testingConnection || !settings.QDRANT_HOST}
-              startIcon={testingConnection ? <CircularProgress size={20} /> : null}
-            >
-              {testingConnection ? 'Testing...' : 'Test Connection'}
-            </Button>
-          </Box>
+          <hr class="my-6 border-gray-200" />
 
-          {testStatus.message && (
-            <Alert severity={testStatus.severity} sx={{ mb: 3 }}>
-              {testStatus.message}
-            </Alert>
-          )}
-
-          <Divider sx={{ my: 3 }} />
-
-          <Typography variant="h6" gutterBottom>
-            OpenAI API Settings
-          </Typography>
-          <TextField
-            fullWidth
-            label="OpenAI API Key"
-            name="OPENAI_API_KEY"
-            value={settings.OPENAI_API_KEY || ''}
-            onChange={handleInputChange}
-            margin="normal"
-            variant="outlined"
-            type="password"
-            helperText="Required for generating embeddings"
-          />
-
-          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between' }}>
-            <Button 
-              variant="outlined" 
-              onClick={fetchSettings} 
-              disabled={loading}
-            >
-              Reset
-            </Button>
-            <Button 
-              type="submit" 
-              variant="contained" 
-              color="primary" 
-              disabled={loading}
-              startIcon={loading ? <CircularProgress size={20} /> : null}
-            >
-              Save Settings
-            </Button>
-          </Box>
+          <h2 class="text-xl font-medium mb-4">OpenAI API Settings</h2>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="openai-key">
+              OpenAI API Key
+            </label>
+            <input
+              id="openai-key"
+              type="password"
+              name="OPENAI_API_KEY"
+              value={settings.OPENAI_API_KEY || ''}
+              onChange={handleInputChange}
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="sk-..."
+            />
+            <p class="mt-1 text-sm text-gray-500">Required for semantic search of repositories</p>
+          </div>
 
           {saveStatus.message && (
-            <Alert severity={saveStatus.severity} sx={{ mt: 3 }}>
+            <div class={`mt-6 p-4 rounded-md ${saveStatus.severity === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
               {saveStatus.message}
-            </Alert>
+            </div>
           )}
+
+          <div class="mt-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+            <button
+              type="submit"
+              disabled={loading}
+              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              {loading ? 'Saving...' : 'Save Settings'}
+            </button>
+            
+            <button
+              type="button"
+              onClick={handleTestQdrantConnection}
+              disabled={testingConnection || !settings.QDRANT_HOST || !settings.QDRANT_PORT}
+              class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+            >
+              {testingConnection ? 'Testing...' : 'Test Connection'}
+            </button>
+          </div>
         </form>
-      </Paper>
-    </Container>
+
+        {testStatus.message && (
+          <div class={`mt-4 p-4 rounded-md ${testStatus.severity === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+            {testStatus.message}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

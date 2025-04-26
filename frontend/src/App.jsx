@@ -1,26 +1,31 @@
-import { Routes, Route } from 'react-router-dom';
-import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import Repositories from './pages/Repositories';
-import GitHubRepoInput from './pages/GitHubRepoInput';
-import ReviewRepository from './pages/ReviewRepository';
-import ConfigPage from './pages/ConfigPage';
-import VectorSettings from './pages/VectorSettings';
-import NotFound from './pages/NotFound';
+import { Router, Route } from 'preact-router';
+import { lazy, Suspense } from 'preact/compat';
+
+// Use lazy loading for components to reduce initial bundle size
+const Layout = lazy(() => import('./components/Layout'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Repositories = lazy(() => import('./pages/Repositories'));
+const GitHubRepoInput = lazy(() => import('./pages/GitHubRepoInput'));
+const ReviewRepository = lazy(() => import('./pages/ReviewRepository'));
+const ConfigPage = lazy(() => import('./pages/ConfigPage'));
+const VectorSettings = lazy(() => import('./pages/VectorSettings'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 function App() {
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/repositories" element={<Repositories />} />
-        <Route path="/add-github-repo" element={<GitHubRepoInput />} />
-        <Route path="/review-repository" element={<ReviewRepository />} />
-        <Route path="/config" element={<ConfigPage />} />
-        <Route path="/vector-settings" element={<VectorSettings />} />
-        <Route path="*" element={<NotFound />} />
-      </Route>
-    </Routes>
+    <Suspense fallback={<div class="p-4">Loading...</div>}>
+      <Layout>
+        <Router>
+          <Route path="/" component={Dashboard} />
+          <Route path="/repositories" component={Repositories} />
+          <Route path="/add-github-repo" component={GitHubRepoInput} />
+          <Route path="/review-repository" component={ReviewRepository} />
+          <Route path="/config" component={ConfigPage} />
+          <Route path="/vector-settings" component={VectorSettings} />
+          <Route path="*" component={NotFound} />
+        </Router>
+      </Layout>
+    </Suspense>
   );
 }
 

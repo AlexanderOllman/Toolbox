@@ -5,7 +5,41 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000,
+  withCredentials: false,
+  maxRedirects: 5,
 });
+
+api.interceptors.request.use(
+  config => {
+    if (!config.url.endsWith('/') && !config.url.includes('.')) {
+      config.url = `${config.url}/`;
+    }
+    console.log(`Outgoing request: ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
+    return config;
+  },
+  error => {
+    console.error('Request error:', error);
+    return Promise.reject(error);
+  }
+);
+
+api.interceptors.response.use(
+  response => {
+    console.log(`Response (${response.status}): ${response.config.method.toUpperCase()} ${response.config.url}`);
+    return response;
+  },
+  error => {
+    if (error.response) {
+      console.error(`Error response (${error.response.status}): ${error.config.method.toUpperCase()} ${error.config.url}`);
+    } else if (error.request) {
+      console.error(`No response received: ${error.config?.method?.toUpperCase()} ${error.config?.url}`);
+    } else {
+      console.error('Error setting up request:', error.message);
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Repository API
 export const getRepositories = async () => {
@@ -88,4 +122,4 @@ export const getQdrantStatus = async () => {
   return response.data;
 };
 
-export default api; 
+export default api;
