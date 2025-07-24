@@ -100,10 +100,31 @@ def main():
                 print("Could not extract run command from README.")
                 command = input("Enter command: ").strip()
         
-        # Add to database
-        add_repository(custom_name, description, command, arguments)
-        
+        # Construct the data dictionary for the add_repository service
+        repo_data_dict = {
+            "name": custom_name,
+            "description": description,
+            "command": command,
+            "args": arguments,
+            "repo_url": repo_url,
+            # Add default values for other fields based on RepositoryBase model
+            "transport": "stdio",
+            "url": "",
+            "read_timeout_seconds": None,
+            "read_transport_sse_timeout_seconds": 300,
+            "headers": "{}",
+            "api_key": "",
+            "env": {},
+            "roots_table": ""
+        }
+
+        # Add to database using the dictionary
+        add_repository(repo_data_dict)
+
         print(f"Added server '{custom_name}' with command '{command}' and args {arguments} to database.")
+        
+        # Note: Automatic testing is not triggered from CLI tool since it doesn't have
+        # FastAPI background tasks. Users can trigger tests via the web interface or API.
     
     except subprocess.CalledProcessError as e:
         print(f"Error cloning repository: {e}")

@@ -8,7 +8,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8020',
+        target: 'http://192.168.194.33:8020',
         changeOrigin: true,
         secure: false,
         ws: true,
@@ -22,7 +22,7 @@ export default defineConfig({
             if (!req.complete && !req.socket.destroyed) {
               console.log('Sending Request to the Target:', req.method, req.url);
               try {
-                proxyReq.setHeader('Origin', 'http://localhost:5173');
+                proxyReq.setHeader('Origin', 'http://192.168.194.33:5173');
               } catch (error) {
                 console.warn('Could not set header:', error.message);
               }

@@ -1,7 +1,7 @@
 {
-  "QDRANT_HOST": "192.168.194.33",
-  "QDRANT_PORT": "6333",
-  "OPENAI_API_KEY": "",
+  "QDRANT_HOST": "host.docker.internal",
+  "QDRANT_PORT": "7333",
+  "OPENAI_API_KEY": "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",
   "COLLECTION_NAME": "mcp_servers",
-  "MCP_REPO_PATH": ""
+  "MCP_REPO_PATH": "/app/backend"
 }

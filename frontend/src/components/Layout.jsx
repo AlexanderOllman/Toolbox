@@ -2,7 +2,7 @@ const navItems = [
   { name: 'Dashboard', to: '/', icon: 'home' },
   { name: 'Repositories', to: '/repositories', icon: 'folder' },
   { name: 'Configuration', to: '/config', icon: 'settings' },
-  { name: 'Vector DB', to: '/vector-settings', icon: 'database' },
+  { name: 'Settings', to: '/settings', icon: 'database' },
 ];
 
 // Modern SVG icon component

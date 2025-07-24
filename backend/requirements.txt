@@ -8,3 +8,4 @@ openai
 tiktoken
 qdrant-client
 requests
+python-on-whales
